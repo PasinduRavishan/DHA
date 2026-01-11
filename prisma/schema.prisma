@@ -1,0 +1,175 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  ADMIN
+  CUSTOMER
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  READY
+  COMPLETED
+  CANCELLED
+}
+
+enum OrderType {
+  CART
+  CHAT
+}
+
+enum ProductType {
+  RETAIL
+  WHOLESALE
+  BOTH
+}
+
+enum ChatStatus {
+  ACTIVE
+  RESOLVED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  phone     String?
+  password  String
+  role      UserRole @default(CUSTOMER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders        Order[]
+  chats         Chat[]
+  sentMessages  Message[]
+  createdProducts Product[]
+
+  @@map("users")
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  name        String
+  description String      @db.Text
+  category    String
+  price       Float
+  stock       Int         @default(0)
+  images      String[]
+  type        ProductType @default(RETAIL)
+  variants    Json?       // Stores dynamic fields like { "Color": ["Red"], "Size": ["M", "L"] }
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  createdBy   String
+  creator     User        @relation(fields: [createdBy], references: [id])
+  categoryId  String?
+  categoryRel Category?   @relation(fields: [categoryId], references: [id])
+
+  orderItems OrderItem[]
+
+  @@map("products")
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("categories")
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  orderNumber   String      @unique @default(cuid())
+  userId        String?
+  user          User?       @relation(fields: [userId], references: [id])
+  
+  // Guest user info
+  guestName     String?
+  guestEmail    String?
+  guestPhone    String?
+  
+  items         OrderItem[]
+  totalAmount   Float
+  status        OrderStatus @default(PENDING)
+  orderType     OrderType   @default(CART)
+  notes         String?     @db.Text
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  chat          Chat?
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
+  variants  Json?
+  createdAt DateTime @default(now())
+
+  @@map("order_items")
+}
+
+model Chat {
+  id         String     @id @default(cuid())
+  customerId String?
+  customer   User?      @relation(fields: [customerId], references: [id])
+  
+  // Guest user info
+  guestName  String?
+  guestEmail String?
+  guestPhone String?
+  
+  status     ChatStatus @default(ACTIVE)
+  orderId    String?    @unique
+  order      Order?     @relation(fields: [orderId], references: [id])
+  messages   Message[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@map("chats")
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  chatId      String
+  chat        Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  senderId    String
+  sender      User     @relation(fields: [senderId], references: [id])
+  message     String   @db.Text
+  attachments String[]
+  isAdmin     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@map("messages")
+}
+
+model LandingPageContent {
+  id            String   @id @default(cuid())
+  heroImages    String[]
+  carouselImages String[]
+  aboutText     String   @db.Text
+  address       String   @db.Text
+  phone         String
+  email         String
+  businessHours String   @db.Text
+  updatedAt     DateTime @updatedAt
+
+  @@map("landing_page_content")
+}
