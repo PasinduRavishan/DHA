@@ -140,7 +140,7 @@ export default async function OrderDetailsPage({ params }: PageProps) {
                                 <div className="p-4 bg-secondary-50 dark:bg-zinc-900/50 rounded-xl border border-secondary-100 dark:border-zinc-800 text-sm space-y-2 text-secondary-600 dark:text-zinc-400">
                                     <p><span className="font-semibold text-foreground dark:text-zinc-300">Name:</span> {order.guestName || session.user.name}</p>
                                     <p><span className="font-semibold text-foreground dark:text-zinc-300">Email:</span> {order.guestEmail || session.user.email}</p>
-                                    <p><span className="font-semibold text-foreground dark:text-zinc-300">Phone:</span> {order.guestPhone || session.user.phone || 'N/A'}</p>
+                                    <p><span className="font-semibold text-foreground dark:text-zinc-300">Phone:</span> {order.guestPhone || (session.user as any).phone || 'N/A'}</p>
                                 </div>
                             </div>
 
