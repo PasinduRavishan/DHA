@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: false, // Disabled to prevent socket reconnection loops in dev
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
