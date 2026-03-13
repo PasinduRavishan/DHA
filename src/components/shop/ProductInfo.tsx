@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ShoppingCart, MessageSquare, AlertCircle } from 'lucide-react';
 import useCart from '@/lib/store/cart';
 import { formatPrice } from '@/lib/utils';
+import useChatStore from '@/lib/store/chat';
 import { ProductType } from '@prisma/client';
 
 interface ProductInfoProps {
@@ -12,6 +13,7 @@ interface ProductInfoProps {
 
 export default function ProductInfo({ data }: ProductInfoProps) {
     const cart = useCart();
+    const chatStore = useChatStore();
     const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
 
     const variants = data.variants as Record<string, string[]> | null;
@@ -44,9 +46,13 @@ export default function ProductInfo({ data }: ProductInfoProps) {
     };
 
     const onChatOrder = () => {
-        // Navigate to chat (future implementation)
-        // For now, mailto link or similar?
-        window.location.href = `mailto:sales@dhanuka.com?subject=Inquiry: ${data.name}`;
+        chatStore.shareProduct({
+            id: data.id,
+            name: data.name,
+            price: Number(data.price),
+            image: data.images?.[0] || '/images/placeholder.png',
+            category: data.category
+        }, `Hi, I'm interested in ordering this product.`);
     };
 
     return (

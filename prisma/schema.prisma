@@ -31,6 +31,7 @@ enum ProductType {
   RETAIL
   WHOLESALE
   BOTH
+  BATHROOM
 }
 
 enum ChatStatus {
@@ -154,6 +155,7 @@ model Message {
   sender      User     @relation(fields: [senderId], references: [id])
   message     String   @db.Text
   attachments String[]
+  metadata    Json?    // Stores shared products, orders, or other structured data
   isAdmin     Boolean  @default(false)
   createdAt   DateTime @default(now())
 
@@ -172,4 +174,72 @@ model LandingPageContent {
   updatedAt     DateTime @updatedAt
 
   @@map("landing_page_content")
+}
+
+enum QuotationStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+model Quotation {
+  id              String           @id @default(cuid())
+  quotationNumber String           @unique
+  customerName    String
+  customerEmail   String?
+  customerPhone   String?
+  customerAddress String?          @db.Text
+  items           QuotationItem[]
+  subtotal        Float
+  discount        Float            @default(0)
+  discountType    String           @default("fixed") // "fixed" or "percentage"
+  tax             Float            @default(0)
+  totalAmount     Float
+  notes           String?          @db.Text
+  validUntil      DateTime?
+  status          QuotationStatus  @default(DRAFT)
+  createdById     String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@map("quotations")
+}
+
+model QuotationItem {
+  id           String     @id @default(cuid())
+  quotationId  String
+  quotation    Quotation  @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  productId    String?    // Null if custom item
+  productName  String     // Name (from product or custom)
+  description  String?    @db.Text
+  quantity     Int
+  unitPrice    Float
+  totalPrice   Float
+  variants     Json?
+  isCustomItem Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+
+  @@map("quotation_items")
+}
+
+enum PageType {
+  RETAIL
+  WHOLESALE
+}
+
+model CarouselSlide {
+  id          String   @id @default(cuid())
+  pageType    PageType
+  title       String
+  subtitle    String?
+  description String?
+  imageUrl    String
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("carousel_slides")
 }

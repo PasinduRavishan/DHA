@@ -141,7 +141,14 @@ export default function CheckoutPage() {
                     <h2 className="text-lg font-medium text-gray-900 mb-4">Order Summary</h2>
                     <ul className="divide-y divide-gray-200 mb-6">
                         {cart.items.map((item) => (
-                            <li key={item.uniqueId} className="flex py-4">
+                            <li key={item.uniqueId} className="flex py-4 gap-4">
+                                <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 relative">
+                                    <img
+                                        src={item.image || '/images/placeholder.png'}
+                                        alt={item.name}
+                                        className="h-full w-full object-cover object-center"
+                                    />
+                                </div>
                                 <div className="flex-1">
                                     <div className="flex justify-between font-medium">
                                         <h3>{item.name}</h3>

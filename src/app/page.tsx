@@ -8,11 +8,12 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="relative h-[95vh] w-full flex items-center justify-center overflow-hidden">
         {/* Background */}
+        {/* Background */}
         <div
           className="absolute inset-0 bg-cover bg-center z-0 scale-105 animate-ken-burns"
-          style={{ backgroundImage: "url('/hero-bg.png')" }}
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=2000&auto=format&fit=crop')" }}
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/50 to-black"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/50 to-black"></div>
         </div>
 
         {/* Floating Abstract Elements */}
@@ -28,7 +29,7 @@ export default function HomePage() {
 
           <h1 className="text-6xl md:text-8xl lg:text-9xl font-black text-white tracking-tighter mb-8 drop-shadow-2xl animate-scale-in">
             DHA
-            <span className="text-transparent bg-clip-text bg-gradient-to-br from-primary-400 to-primary-600 animate-pulse">.</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-br from-primary-400 to-primary-600 animate-pulse"></span>
           </h1>
 
           <p className="text-lg md:text-2xl text-zinc-300 mb-12 max-w-3xl mx-auto font-light leading-relaxed animate-slide-up bg-black/30 backdrop-blur-sm p-4 rounded-xl border border-white/5">
@@ -158,7 +159,7 @@ export default function HomePage() {
       <footer className="bg-black text-white py-20 border-t border-zinc-900">
         <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-16">
           <div className="col-span-1 md:col-span-2">
-            <h2 className="text-3xl font-black mb-8 tracking-tighter">DHA<span className="text-primary-500">.</span></h2>
+            <h2 className="text-3xl font-black mb-8 tracking-tighter">DHA<span className="text-primary-500"></span></h2>
             <p className="text-zinc-500 max-w-sm mb-8 text-lg font-light">
               Setting the standard for furniture fittings and architectural hardware since 2010.
             </p>

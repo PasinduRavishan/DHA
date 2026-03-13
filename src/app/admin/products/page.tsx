@@ -3,9 +3,10 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Plus, Edit, Trash2 } from "lucide-react";
-import Image from "next/image";
-import { formatPrice } from "@/lib/utils";
+import { Plus, Package } from "lucide-react";
+import ProductList from "@/components/admin/ProductList";
+
+export const dynamic = 'force-dynamic';
 
 export default async function ProductsPage() {
     const session = await getServerSession(authOptions);
@@ -14,84 +15,53 @@ export default async function ProductsPage() {
         redirect("/auth/signin");
     }
 
-    const products = await prisma.product.findMany({
-        orderBy: {
-            createdAt: 'desc'
-        }
-    });
+    const [products, categories] = await Promise.all([
+        prisma.product.findMany({
+            orderBy: {
+                createdAt: 'desc'
+            }
+        }),
+        prisma.category.findMany({
+            orderBy: { name: 'asc' }
+        })
+    ]);
+
+    // Simple serialization for props
+    const serializedProducts = products.map(p => ({
+        ...p,
+        price: Number(p.price)
+    }));
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div className="flex justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold">Products</h1>
-                <Link
-                    href="/admin/products/add"
-                    className="bg-primary-600 text-white px-4 py-2 rounded-md flex items-center gap-2 hover:bg-primary-700 transition-colors"
-                >
-                    <Plus className="h-4 w-4" />
-                    Add Product
-                </Link>
-            </div>
+        <div className="bg-background dark:bg-black min-h-screen transition-colors duration-300 relative">
+            {/* Ambient Top Shadow/Gradient */}
+            <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-zinc-900/50 via-zinc-900/10 to-transparent pointer-events-none hidden dark:block"></div>
 
-            <div className="bg-white shadow overflow-hidden sm:rounded-md border border-gray-100">
-                <ul className="divide-y divide-gray-200">
-                    {products.length === 0 ? (
-                        <li className="px-6 py-12 text-center text-gray-500">
-                            No products found. Click "Add Product" to create one.
-                        </li>
-                    ) : (
-                        products.map((product) => (
-                            <li key={product.id}>
-                                <div className="px-4 py-4 sm:px-6 hover:bg-gray-50 flex items-center justify-between">
-                                    <div className="flex items-center">
-                                        <div className="h-16 w-16 flex-shrink-0 relative rounded-md overflow-hidden border border-gray-200 bg-gray-100">
-                                            {product.images[0] ? (
-                                                <Image
-                                                    src={product.images[0]}
-                                                    alt={product.name}
-                                                    fill
-                                                    className="object-cover"
-                                                />
-                                            ) : (
-                                                <div className="flex items-center justify-center h-full text-gray-400">
-                                                    No Img
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="ml-4">
-                                            <div className="text-lg font-medium text-primary-600 truncate">{product.name}</div>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                                    {product.category}
-                                                </span>
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.type === 'RETAIL' ? 'bg-blue-100 text-blue-800' :
-                                                        product.type === 'WHOLESALE' ? 'bg-purple-100 text-purple-800' :
-                                                            'bg-green-100 text-green-800'
-                                                    }`}>
-                                                    {product.type}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-8">
-                                        <div className="text-right">
-                                            <div className="text-sm font-bold text-gray-900">{formatPrice(product.price)}</div>
-                                            <div className={`text-xs ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                {product.stock} in stock
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <Link href={`/admin/products/${product.id}`} className="p-2 text-gray-400 hover:text-primary-600 transition-colors">
-                                                <Edit className="h-5 w-5" />
-                                            </Link>
-                                            {/* Delete button would go here (form action) */}
-                                        </div>
-                                    </div>
-                                </div>
-                            </li>
-                        ))
-                    )}
-                </ul>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
+                    <div>
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-500 rounded-lg">
+                                <Package className="h-6 w-6" />
+                            </div>
+                            <h1 className="text-3xl font-black text-foreground dark:text-white tracking-tight">Products Listing</h1>
+                        </div>
+                        <p className="text-secondary-500 dark:text-zinc-400 font-medium">Manage and monitor your store inventory</p>
+                    </div>
+
+                    <Link
+                        href="/admin/products/add"
+                        className="group relative overflow-hidden bg-primary-600 text-white px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-wider shadow-xl shadow-primary-500/25 hover:shadow-primary-500/40 hover:-translate-y-1 transition-all active:scale-95"
+                    >
+                        <span className="relative z-10 flex items-center gap-2">
+                            <Plus className="h-5 w-5" />
+                            Add New Product
+                        </span>
+                        <div className="absolute inset-0 bg-gradient-to-r from-primary-400 to-primary-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    </Link>
+                </div>
+
+                <ProductList initialProducts={serializedProducts} categories={categories} />
             </div>
         </div>
     );

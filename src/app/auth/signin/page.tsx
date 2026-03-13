@@ -28,7 +28,16 @@ export default function SignIn() {
             } else {
                 toast.success('Signed in successfully');
                 router.refresh();
-                router.push('/');
+
+                // Fetch current session to check role
+                const res = await fetch('/api/auth/session');
+                const session = await res.json();
+
+                if (session?.user?.role === 'ADMIN') {
+                    router.push('/admin');
+                } else {
+                    router.push('/');
+                }
             }
         } catch (error) {
             toast.error('Something went wrong');

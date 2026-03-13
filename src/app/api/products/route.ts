@@ -12,7 +12,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { name, description, category, price, stock, images, type } = body;
+        const { name, description, category, price, stock, images, type, variants } = body;
 
         // TODO: Add validation with Zod
 
@@ -25,6 +25,7 @@ export async function POST(req: Request) {
                 stock,
                 images,
                 type,
+                variants,
                 createdBy: session.user.id
             }
         });

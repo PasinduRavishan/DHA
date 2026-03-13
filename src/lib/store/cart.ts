@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { toast } from 'react-hot-toast';
 
 export interface CartItem {
-    id: string; // Product ID, potentially combined with variant ID later
+    id: string; // Product ID
     uniqueId: string; // generated ID for cart item (productID + variants)
     name: string;
     price: number;
@@ -15,6 +15,7 @@ export interface CartItem {
 
 interface CartStore {
     items: CartItem[];
+    userId: string | null;
     isOpen: boolean;
     onOpen: () => void;
     onClose: () => void;
@@ -22,12 +23,18 @@ interface CartStore {
     removeItem: (id: string) => void;
     removeAll: () => void;
     updateQuantity: (id: string, quantity: number) => void;
+    setUserId: (userId: string | null) => void;
+    clearCartForNewUser: () => void;
 }
+
+// Get storage key based on user - this creates separate carts per user
+const getStorageKey = () => 'dha-cart-storage';
 
 const useCart = create(
     persist<CartStore>(
         (set, get) => ({
             items: [],
+            userId: null,
             isOpen: false,
             onOpen: () => set({ isOpen: true }),
             onClose: () => set({ isOpen: false }),
@@ -36,7 +43,6 @@ const useCart = create(
                 const existingItem = currentItems.find((item) => item.uniqueId === data.uniqueId);
 
                 if (existingItem) {
-                    // Provide feedback or just increment?
                     toast('Item already in cart. Use cart to update quantity.', { icon: 'ℹ️' });
                     return;
                 }
@@ -58,11 +64,41 @@ const useCart = create(
                     return item;
                 });
                 set({ items: updatedItems });
-            }
+            },
+            setUserId: (userId: string | null) => {
+                const currentUserId = get().userId;
+                // If user changed, clear the cart
+                if (currentUserId !== userId && userId !== null) {
+                    // Only clear if switching between different logged-in users
+                    if (currentUserId !== null) {
+                        set({ items: [], userId });
+                    } else {
+                        // Keep cart items when logging in (guest -> user)
+                        set({ userId });
+                    }
+                } else if (userId === null && currentUserId !== null) {
+                    // User logged out - clear cart
+                    set({ items: [], userId: null });
+                }
+            },
+            clearCartForNewUser: () => set({ items: [], userId: null }),
         }),
         {
-            name: 'cart-storage',
+            name: getStorageKey(),
             storage: createJSONStorage(() => localStorage),
+            partialize: (state) => ({
+                items: state.items,
+                userId: state.userId,
+                isOpen: false,
+                onOpen: state.onOpen,
+                onClose: state.onClose,
+                addItem: state.addItem,
+                removeItem: state.removeItem,
+                removeAll: state.removeAll,
+                updateQuantity: state.updateQuantity,
+                setUserId: state.setUserId,
+                clearCartForNewUser: state.clearCartForNewUser,
+            }),
         }
     )
 );

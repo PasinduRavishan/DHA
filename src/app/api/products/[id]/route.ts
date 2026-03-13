@@ -5,16 +5,17 @@ import prisma from "@/lib/prisma";
 
 export async function GET(
     req: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        if (!params.id) {
+        const { id } = await params;
+        if (!id) {
             return new NextResponse("Product ID required", { status: 400 });
         }
 
         const product = await prisma.product.findUnique({
             where: {
-                id: params.id
+                id
             },
             include: {
                 categoryRel: true // Include related category info if needed
@@ -34,10 +35,11 @@ export async function GET(
 
 export async function PATCH(
     req: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const session = await getServerSession(authOptions);
+        const { id } = await params;
 
         if (session?.user?.role !== "ADMIN") {
             return new NextResponse("Unauthorized", { status: 401 });
@@ -48,7 +50,7 @@ export async function PATCH(
 
         const product = await prisma.product.update({
             where: {
-                id: params.id
+                id: id
             },
             data: {
                 name,
@@ -71,10 +73,11 @@ export async function PATCH(
 
 export async function DELETE(
     req: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const session = await getServerSession(authOptions);
+        const { id } = await params;
 
         if (session?.user?.role !== "ADMIN") {
             return new NextResponse("Unauthorized", { status: 401 });
@@ -82,7 +85,7 @@ export async function DELETE(
 
         const product = await prisma.product.delete({
             where: {
-                id: params.id
+                id
             }
         });
 
