@@ -48,22 +48,33 @@ export default function EditProductPage() {
             const product = await res.json();
 
             setFormData({
-                name: product.name,
-                description: product.description,
-                price: product.price.toString(),
-                stock: product.stock.toString(),
-                category: product.category,
-                type: product.type,
-                images: product.images
+                name: product.name || '',
+                description: product.description || '',
+                price: product.price?.toString() || '0',
+                stock: product.stock?.toString() || '0',
+                category: product.category || '',
+                type: product.type || 'RETAIL',
+                images: product.images || []
             });
 
             // Parse variants
-            // DB: { "Size": ["S", "M"] } -> State: [{name: "Size", values: "S, M"}]
             if (product.variants) {
-                const parsedVariants = Object.entries(product.variants).map(([key, val]) => ({
-                    name: key,
-                    values: Array.isArray(val) ? val.join(', ') : String(val)
-                }));
+                let parsedVariants;
+                if (Array.isArray(product.variants)) {
+                    // Old format: [{name: "Size", values: ["S", "M"]}] or [{key: "Size", value: "S"}]
+                    parsedVariants = product.variants.map((v: any) => ({
+                        name: v.name || v.key || '',
+                        values: Array.isArray(v.values || v.value) 
+                            ? (v.values || v.value).join(', ') 
+                            : String(v.values || v.value || '')
+                    }));
+                } else {
+                    // DB: { "Size": ["S", "M"] } -> State: [{name: "Size", values: "S, M"}]
+                    parsedVariants = Object.entries(product.variants).map(([key, val]) => ({
+                        name: key,
+                        values: Array.isArray(val) ? val.join(', ') : typeof val === 'object' ? JSON.stringify(val) : String(val)
+                    }));
+                }
                 setVariants(parsedVariants);
             }
 
@@ -285,6 +296,7 @@ export default function EditProductPage() {
                             <option value="RETAIL">Retail Only</option>
                             <option value="WHOLESALE">Wholesale Only</option>
                             <option value="BOTH">Both Retail & Wholesale</option>
+                            <option value="BATHROOM">Bathroom Fittings</option>
                         </select>
                     </div>
                 </div>
@@ -292,7 +304,6 @@ export default function EditProductPage() {
                 <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700">Description</label>
                     <textarea
-                        required
                         rows={4}
                         disabled={loading}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"

@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
-import { X, Info, Layers, ArrowRight, ShoppingCart, MessageCircle } from 'lucide-react';
+import { X, Info, Layers, ArrowRight, ShoppingCart, MessageCircle, Search } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import useCart from '@/lib/store/cart';
 import useChatStore from '@/lib/store/chat';
@@ -11,7 +11,7 @@ import { toast } from 'react-hot-toast';
 interface Product {
     id: string;
     name: string;
-    description: string;
+    description?: string | null;
     price: number | null;
     images: string[];
     category: string;
@@ -31,11 +31,17 @@ export default function BathroomShowcase({ products, categories }: BathroomShowc
     const chatStore = useChatStore();
     const [activeImageIndex, setActiveImageIndex] = useState(0);
     const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
+    const [searchQuery, setSearchQuery] = useState('');
 
     const filteredProducts = useMemo(() => {
-        if (selectedCategory === 'All') return products;
-        return products.filter(p => p.category === selectedCategory);
-    }, [products, selectedCategory]);
+        return products.filter(p => {
+            const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
+            const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                p.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                p.category.toLowerCase().includes(searchQuery.toLowerCase());
+            return matchesCategory && matchesSearch;
+        });
+    }, [products, selectedCategory, searchQuery]);
 
     // Helper function to parse variants - MUST be defined before functions that use it
     const getVariants = (product: Product): Record<string, string[]> => {
@@ -173,31 +179,54 @@ export default function BathroomShowcase({ products, categories }: BathroomShowc
                 </div>
             </div>
 
-            {/* Category Filter */}
+            {/* Category Filter & Search */}
             <div className="sticky top-20 z-40 bg-neutral-950/80 backdrop-blur-xl border-b border-white/5 py-4">
-                <div className="max-w-7xl mx-auto px-4 overflow-x-auto no-scrollbar">
-                    <div className="flex gap-4 min-w-max justify-center md:justify-start">
-                        <button
-                            onClick={() => setSelectedCategory('All')}
-                            className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 ${selectedCategory === 'All'
-                                ? 'bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-105'
-                                : 'bg-neutral-900 text-neutral-400 hover:bg-neutral-800 hover:text-white'
-                                }`}
-                        >
-                            All Products
-                        </button>
-                        {categories.map(cat => (
+                <div className="max-w-7xl mx-auto px-4">
+                    <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+                        {/* Categories */}
+                        <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 md:pb-0 w-full md:w-auto">
                             <button
-                                key={cat.id}
-                                onClick={() => setSelectedCategory(cat.name)}
-                                className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 ${selectedCategory === cat.name
+                                onClick={() => setSelectedCategory('All')}
+                                className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 whitespace-nowrap ${selectedCategory === 'All'
                                     ? 'bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-105'
                                     : 'bg-neutral-900 text-neutral-400 hover:bg-neutral-800 hover:text-white'
                                     }`}
                             >
-                                {cat.name}
+                                All Products
                             </button>
-                        ))}
+                            {categories.map(cat => (
+                                <button
+                                    key={cat.id}
+                                    onClick={() => setSelectedCategory(cat.name)}
+                                    className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 whitespace-nowrap ${selectedCategory === cat.name
+                                        ? 'bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-105'
+                                        : 'bg-neutral-900 text-neutral-400 hover:bg-neutral-800 hover:text-white'
+                                        }`}
+                                >
+                                    {cat.name}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Search Bar */}
+                        <div className="relative w-full md:w-72 group">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500 group-focus-within:text-amber-500 transition-colors" />
+                            <input
+                                type="text"
+                                placeholder="Search products..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full bg-neutral-900 border border-white/10 rounded-full py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all text-white placeholder:text-neutral-600"
+                            />
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery('')}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-white"
+                                >
+                                    <X className="h-4 w-4" />
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -319,14 +348,16 @@ export default function BathroomShowcase({ products, categories }: BathroomShowc
 
                             <div className="space-y-8">
                                 {/* Description */}
-                                <div>
-                                    <h3 className="text-sm font-bold text-neutral-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                                        <Info className="h-4 w-4" /> Description
-                                    </h3>
-                                    <p className="text-neutral-300 leading-relaxed text-lg font-light">
-                                        {selectedProduct.description}
-                                    </p>
-                                </div>
+                                {selectedProduct.description && (
+                                    <div>
+                                        <h3 className="text-sm font-bold text-neutral-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                            <Info className="h-4 w-4" /> Description
+                                        </h3>
+                                        <p className="text-neutral-300 leading-relaxed text-lg font-light">
+                                            {selectedProduct.description}
+                                        </p>
+                                    </div>
+                                )}
 
                                 {/* Variants Section */}
                                 {hasVariants(selectedProduct) && (

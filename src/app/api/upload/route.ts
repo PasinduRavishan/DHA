@@ -1,37 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile } from "fs/promises";
-import path from "path";
+import { v2 as cloudinary } from "cloudinary";
 
-// Simple local upload handler
+cloudinary.config({
+    cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 export async function POST(req: NextRequest) {
-    // Check for form data
-    const formData = await req.formData();
-    const file = formData.get("file") as File;
-
-    if (!file) {
-        return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
-    }
-
-    // Convert file to buffer
-    const buffer = Buffer.from(await file.arrayBuffer());
-
-    // Generate unique name
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.name);
-    const filename = `attachment-${uniqueSuffix}${ext}`;
-
-    // Path to save - ensure this directory exists in public/uploads
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
-    const filePath = path.join(uploadDir, filename);
-
     try {
-        await writeFile(filePath, buffer);
+        const formData = await req.formData();
+        const file = formData.get("file") as File;
 
-        // Return public URL
-        const publicUrl = `/uploads/${filename}`;
-        return NextResponse.json({ url: publicUrl });
+        if (!file) {
+            return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+        }
+
+        const bytes = await file.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+
+        // Upload to Cloudinary using a promise to handle stream-like behavior or buffer
+        const result: any = await new Promise((resolve, reject) => {
+            cloudinary.uploader.upload_stream(
+                {
+                    resource_type: "auto",
+                    folder: "chat-attachments",
+                },
+                (error, result) => {
+                    if (error) reject(error);
+                    else resolve(result);
+                }
+            ).end(buffer);
+        });
+
+        return NextResponse.json({ url: result.secure_url });
     } catch (error) {
         console.error("Upload error:", error);
-        return NextResponse.json({ error: "Failed to save file" }, { status: 500 });
+        return NextResponse.json({ error: "Failed to upload to Cloudinary" }, { status: 500 });
     }
 }

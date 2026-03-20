@@ -99,12 +99,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
                         </div>
                     </div>
 
-                    <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
-                        <h3 className="font-bold text-gray-900 mb-4">Description</h3>
-                        <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">
-                            {product.description}
-                        </p>
-                    </div>
+                    {product.description && (
+                        <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
+                            <h3 className="font-bold text-gray-900 mb-4">Description</h3>
+                            <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">
+                                {product.description}
+                            </p>
+                        </div>
+                    )}
 
                     {/* Variants Display */}
                     <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
@@ -112,11 +114,18 @@ export default async function ProductPage({ params }: ProductPageProps) {
                         {variants && Object.keys(variants).length > 0 ? (
                             <table className="min-w-full divide-y divide-gray-200">
                                 <tbody className="divide-y divide-gray-200">
-                                    {Object.entries(variants).map(([key, values]) => (
+                                    {Array.isArray(variants) ? variants.map((v: any, i) => (
+                                        <tr key={i}>
+                                            <td className="py-3 text-sm font-medium text-gray-500 w-1/3">{v.name || v.key}</td>
+                                            <td className="py-3 text-sm text-gray-900">
+                                                {Array.isArray(v.values || v.value) ? (v.values || v.value).join(', ') : String(v.values || v.value || '')}
+                                            </td>
+                                        </tr>
+                                    )) : Object.entries(variants).map(([key, values]) => (
                                         <tr key={key}>
                                             <td className="py-3 text-sm font-medium text-gray-500 w-1/3">{key}</td>
                                             <td className="py-3 text-sm text-gray-900">
-                                                {(values as string[]).join(', ')}
+                                                {Array.isArray(values) ? values.join(', ') : typeof values === 'object' ? JSON.stringify(values) : String(values)}
                                             </td>
                                         </tr>
                                     ))}

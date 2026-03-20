@@ -11,8 +11,6 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
         const { email, password } = body;
 
-        console.log("Mobile auth attempt for email:", email);
-
         if (!email || !password) {
             return NextResponse.json(
                 { error: "Email and password are required" },
@@ -24,8 +22,6 @@ export async function POST(req: NextRequest) {
             where: { email: email.toLowerCase().trim() }
         });
 
-        console.log("User found:", user ? "Yes" : "No");
-
         if (!user) {
             return NextResponse.json(
                 { error: "Invalid email or password" },
@@ -35,7 +31,6 @@ export async function POST(req: NextRequest) {
 
         // Check if user has a password set
         if (!user.password) {
-            console.log("User has no password set");
             return NextResponse.json(
                 { error: "Please set a password for your account" },
                 { status: 401 }
@@ -43,7 +38,6 @@ export async function POST(req: NextRequest) {
         }
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
-        console.log("Password valid:", isPasswordValid);
 
         if (!isPasswordValid) {
             return NextResponse.json(
@@ -63,8 +57,6 @@ export async function POST(req: NextRequest) {
             JWT_SECRET,
             { expiresIn: "30d" }
         );
-
-        console.log("Auth successful, token generated for:", user.email);
 
         return NextResponse.json({
             user: {
